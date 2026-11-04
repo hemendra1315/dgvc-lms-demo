@@ -1,0 +1,10 @@
+{
+  "name": "DGVC LMS (Demo)",
+  "short_name": "DGVC LMS",
+  "description": "Learn. Explore. Excel. — DG Vaishnav College learning resources (demo)",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0F766E",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

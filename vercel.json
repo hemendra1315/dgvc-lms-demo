@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm install",
+  "buildCommand": "node scripts/build.mjs",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/((?!assets/|demo-pdfs/).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    { "source": "/demo-pdfs/(.*)", "headers": [{ "key": "Content-Type", "value": "application/pdf" }] }
+  ]
+}

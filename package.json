@@ -1,0 +1,31 @@
+{
+  "name": "dgvc-lms",
+  "private": true,
+  "version": "0.2.0",
+  "description": "DGVC LMS demo - student PYQ app + admin resource management (demo data adapter)",
+  "type": "module",
+  "scripts": {
+    "generate:pyq": "python3 scripts/pyq/generate_pyq_papers.py",
+    "verify:pyq": "python3 scripts/pyq/verify_pyq_papers.py",
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs --watch --serve",
+    "preview": "node scripts/build.mjs --serve",
+    "test": "tsx --test tests/*.test.ts",
+    "e2e": "node scripts/e2e.mjs",
+    "verify": "npm run verify:pyq && npm test && npm run build && npm run e2e"
+  },
+  "dependencies": {
+    "pdfjs-dist": "6.2.108",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-icons": "5.7.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.63.0",
+    "tailwindcss": "4.3.3",
+    "tsx": "^4.20.0",
+    "typescript": ">=5.9.0"
+  }
+}
