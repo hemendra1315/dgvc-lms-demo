@@ -264,6 +264,15 @@ button.card:active,button.tile:active,button.hero:active{transform:scale(.985)}
 .tag{white-space:nowrap}
 .brandmark{width:38px;height:38px;border-radius:12px;border:1.5px solid var(--gold);color:var(--gold);display:grid;place-items:center;margin-right:2px}
 .chno{width:30px;height:30px;border-radius:10px;background:var(--grey);color:var(--navy);display:grid;place-items:center;font-weight:800;font-size:12.5px;flex:none}.chno.ip{background:var(--gold-soft);color:#8a6a2e}.chno.done{background:var(--ok);color:#fff}
+
+.chgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.chtile{aspect-ratio:1/1;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;box-shadow:0 1px 2px rgba(19,33,63,.04),0 6px 18px rgba(19,33,63,.05);transition:transform .12s ease}
+.chtile:active{transform:scale(.97)}
+.chtile .n{font-family:var(--serif);font-size:34px;line-height:1;font-weight:600;color:var(--gold)}
+.chtile .t{font-weight:700;font-size:14.5px;line-height:1.3;color:var(--navy);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.chtile.ip{border-color:var(--gold)}
+.chtile.done{background:var(--navy);border-color:var(--navy)}.chtile.done .t{color:#fff}.chtile.done .n{color:var(--gold-2)}
+@media(min-width:420px){.chtile .t{font-size:15px}}
 </style>
 </head>
 <body>
@@ -4061,7 +4070,7 @@ V.subject = p => {
    <div class="row mt12" style="gap:10px"><div class="grow">${progBar(pg.pct)}</div><span class="small b7">${pg.pct}%</span><span class="tiny muted">${pg.done}/${pg.total}</span></div>
    <div class="row mt12" style="gap:8px"><button class="btn sm grow" data-a="openCh" data-x="${cont.id}">${ic('play','s')} Continue</button><button class="btn sm soft grow" data-a="scrollTo" data-x="papers">${ic('file','s')} Papers</button><button class="btn sm soft grow" data-a="quiz" data-st="subject" data-x="${s.id}" data-n="${S.prefs.qlen}">${ic('target','s')} Quiz</button></div>
    <div class="sec"><h3>Chapters</h3><span class="tiny muted">${cs.length} chapters</span></div>
-   <div class="card list">${cs.map(c=>`<button class="li" data-a="openCh" data-x="${c.id}"><span class="chno ${status(c.id)}">${status(c.id)==='done'?ic('check','s'):chNum(c)}</span><div class="grow"><div class="b6" style="font-size:14.5px">${esc(c.title)}</div><div class="tiny muted">${c.full?'Notes · lesson · quiz':'Outline notes'}${S.scores[c.id]?` · quiz ${pct(S.scores[c.id].c,S.scores[c.id].t)}%`:''}</div></div>${ic('right','chev')}</button>`).join('')}</div>
+   <div class="chgrid">${cs.map(c=>`<button class="chtile ${status(c.id)}" data-a="openCh" data-x="${c.id}" aria-label="Chapter ${chNum(c)}: ${esc(c.title)}"><span class="n">${chNum(c)}</span><span class="t">${esc(c.title)}</span></button>`).join('')}</div>
    <div class="sec" id="papers"><h3>Sample papers</h3><span class="tag bad">AI-generated · not official</span></div>
    <div class="card list">${papersOf(s.id).map(pp=>`<button class="li" data-a="paper" data-x="${pp.id}">${ic('file')}<div class="grow"><div class="b6">${esc(pp.title)}</div><div class="tiny muted">${esc(pp.type)}${pp.year?' · '+pp.year:''}</div></div>${ic('right','chev')}</button>`).join('')}</div>
    <div style="height:16px"></div></div>`;
