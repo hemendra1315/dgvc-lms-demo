@@ -278,6 +278,16 @@ button.card:active,button.tile:active,button.hero:active{transform:scale(.985)}
 .sjtile:active{transform:scale(.97)}
 .sjtile .ic{width:44px;height:44px;border-radius:13px;background:#e9edf5;color:var(--navy);display:grid;place-items:center}
 .sjtile .t{font-weight:700;font-size:15px;line-height:1.3;color:var(--navy);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+.toc{padding:6px 0}
+.toc-row{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;padding:11px 16px;font-family:var(--serif);font-size:16.5px;line-height:1.35;color:var(--ink)}
+.toc-row+.toc-row{border-top:1px dotted var(--grey-2)}
+.toc-row:active{background:var(--grey)}
+.toc-row .n{min-width:28px;font-weight:600;color:var(--navy)}
+.toc-row .t{flex:1}
+.toc-row.ip .n{color:var(--gold)}
+.toc-row.done .n,.toc-row.done .ico{color:var(--ok)}
+.toc-row .ico{align-self:center}
 </style>
 </head>
 <body>
@@ -4074,7 +4084,7 @@ V.subject = p => {
    <div class="row mt12" style="gap:10px"><div class="grow">${progBar(pg.pct)}</div><span class="small b7">${pg.pct}%</span><span class="tiny muted">${pg.done}/${pg.total}</span></div>
    <div class="row mt12" style="gap:8px"><button class="btn sm grow" data-a="openCh" data-x="${cont.id}">${ic('play','s')} Continue</button><button class="btn sm soft grow" data-a="scrollTo" data-x="papers">${ic('file','s')} Papers</button><button class="btn sm soft grow" data-a="quiz" data-st="subject" data-x="${s.id}" data-n="${S.prefs.qlen}">${ic('target','s')} Quiz</button></div>
    <div class="sec"><h3>Chapters</h3><span class="tiny muted">${cs.length} chapters</span></div>
-   <div class="chgrid">${cs.map(c=>`<button class="chtile ${status(c.id)}" data-a="openCh" data-x="${c.id}" aria-label="Chapter ${chNum(c)}: ${esc(c.title)}"><span class="n">${chNum(c)}.</span><span class="t">${esc(c.title)}</span></button>`).join('')}</div>
+   <div class="card toc">${cs.map(c=>`<button class="toc-row ${status(c.id)}" data-a="openCh" data-x="${c.id}"><span class="n">${chNum(c)}.</span><span class="t">${esc(c.title)}</span>${status(c.id)==='done'?ic('check','s'):''}</button>`).join('')}</div>
    <div class="sec" id="papers"><h3>Sample papers</h3><span class="tag bad">AI-generated · not official</span></div>
    <div class="card list">${papersOf(s.id).map(pp=>`<button class="li" data-a="paper" data-x="${pp.id}">${ic('file')}<div class="grow"><div class="b6">${esc(pp.title)}</div><div class="tiny muted">${esc(pp.type)}${pp.year?' · '+pp.year:''}</div></div>${ic('right','chev')}</button>`).join('')}</div>
    <div style="height:16px"></div></div>`;
