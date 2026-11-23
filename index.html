@@ -4015,7 +4015,7 @@ function todayPlan(){
 }
 function doneToday(){ const d=new Date().toDateString(); return S.log.filter(l=>new Date(l.at).toDateString()===d); }
 V.today = () => {
-  const pr=S.profile, sp=semProg(pr.sem), ne=nextExam(), plan=todayPlan(), done=doneToday();
+  const pr=S.profile, sp=semProg(pr.sem), ne=nextExam(), done=doneToday();
   const h=new Date().getHours(); const greet=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
   const last=S.recent.find(id=>CH(id).sem===pr.sem); const cont=last?CH(last):null;
   return `<div class="fade"><div class="pad" style="padding-top:16px">
@@ -4028,9 +4028,7 @@ V.today = () => {
       <div class="row mt12" style="gap:10px;color:#b9c1d6"><span class="small">${fmtDate(ne.date,{weekday:'short',day:'numeric',month:'short'})}${ne.demo?' · sample date':''}</span><span class="grow"></span><span class="timer small" id="cd" data-d="${ne.date}">—</span></div>
       <div class="mt12">${progBar(sp.pct)}</div><div class="tiny mt8" style="color:#9aa4bd">${SEMNAME(pr.sem)} · ${sp.done} of ${sp.total} chapters complete</div></button>`:''}
 
-   <div class="sec"><h3>Today’s plan</h3><span class="tiny muted">updates as you study</span></div>
-   <div class="card list">${plan.map((t,i)=>`<button class="li" data-a="${t.act}" data-x="${t.x}" ${t.st?`data-st="${t.st}" data-n="${t.n}"`:''}><span class="st" style="color:var(--navy);border-color:var(--grey-2);font-weight:800;font-size:12px">${i+1}</span><div class="grow"><div class="b7">${esc(t.title)}</div><div class="small muted">${esc(t.why)}</div></div>${ic('right','chev')}</button>`).join('')}</div>
-   ${done.length?`<div class="card cp mt8" style="background:var(--ok-soft);border-color:#cfe6da"><div class="tiny b7" style="color:var(--ok)">DONE TODAY</div>${done.slice(0,4).map(l=>`<div class="row small mt8">${ic('check','s')}<span class="grow">${esc(l.text)}</span></div>`).join('')}</div>`:''}
+   ${done.length?`<div class="card cp mt16" style="background:var(--ok-soft);border-color:#cfe6da"><div class="tiny b7" style="color:var(--ok)">DONE TODAY</div>${done.slice(0,4).map(l=>`<div class="row small mt8">${ic('check','s')}<span class="grow">${esc(l.text)}</span></div>`).join('')}</div>`:''}
 
    ${cont?`<div class="sec"><h3>Continue learning</h3></div>
    <button class="card cp row" style="width:100%;text-align:left" data-a="openCh" data-x="${cont.id}">${subjIcon(SUBJ(cont.sid))}<div class="grow"><div class="tiny muted b7">${SUBJ(cont.sid).short} · CHAPTER ${chNum(cont)} · ${STLABEL[status(cont.id)].toUpperCase()}</div><div class="b7 trunc">${esc(cont.title)}</div></div>${ic('right','chev')}</button>`:''}
