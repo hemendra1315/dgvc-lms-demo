@@ -288,6 +288,18 @@ button.card:active,button.tile:active,button.hero:active{transform:scale(.985)}
 .toc-row.ip .n{color:var(--gold)}
 .toc-row.done .n,.toc-row.done .ico{color:var(--ok)}
 .toc-row .ico{align-self:center}
+
+.optile{aspect-ratio:1/1;border-radius:20px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;background:var(--navy);color:#fff;box-shadow:0 12px 28px rgba(19,33,63,.22);transition:transform .12s ease}
+.optile:active{transform:scale(.97)}
+.optile .ic{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.1);color:var(--gold-2);display:grid;place-items:center}
+.optile .t{display:block;font-family:var(--serif);font-size:21px;font-weight:600;line-height:1.15}
+.optile .s{display:block;font-size:12px;color:#b9c1d6;margin-top:4px;font-weight:600}
+.optile.qb{background:#fff;color:var(--navy);border:1px solid var(--line);box-shadow:0 6px 18px rgba(19,33,63,.06)}
+.optile.qb .ic{background:var(--gold-soft);color:#8a6a2e}.optile.qb .s{color:var(--ink-3)}
+.pdfbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.pdfview{background:#5b6478;padding:12px 10px;min-height:60vh}
+.pdfview .empty{color:#e6e9f2}
+.pdfpage{display:block;width:100%;height:auto;margin:0 auto 12px;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.25);border-radius:2px;aspect-ratio:1240/1754}
 </style>
 </head>
 <body>
@@ -4092,32 +4104,27 @@ V.subject = p => {
 
 /* ---------- 5. Chapter (one scroll) ---------- */
 V.chapter = p => {
-  const m=CH(p.x), s=SUBJ(m.sid), d=DG.ch[m.id], doc=chapterDoc(m.id), st=status(m.id), sc=S.scores[m.id];
+  const m=CH(p.x), s=SUBJ(m.sid), d=DG.ch[m.id], st=status(m.id);
   const lastQ=S.quizzes.find(q=>q.scopeType==='chapter'&&q.scopeId===m.id);
-  const notes = d ? doc.pages.filter(pg=>!/Examination questions|Introduction/.test(pg.title)).map(pg=>pg.md).join('\n\n') : doc.pages[0].md;
+  const nq = d ? d.short.length+d.long.length+d.mcq.length : mcqPool({type:'chapter',id:m.id}).length;
+  const prev=chNeighbor(m,-1), next=chNeighbor(m,1);
   return `${topbar(`${s.short} · Chapter ${chNum(m)}`,{right:`<button class="ib" data-a="askChapter" data-x="${m.id}" aria-label="Ask AI about this chapter" style="color:var(--gold)">${ic('spark')}</button>${saveBtn('note',m.id)}`})}
-  <nav class="jump">${[['n-notes','Notes'],['lesson-sec','Lesson'],['quiz-sec','Quiz'],...(d?[['exam-sec','Exam Qs']]:[]),['pyq-sec','PYQs']].map(([k,l])=>`<button class="chip" data-a="scrollTo" data-x="${k}">${l}</button>`).join('')}</nav>
   <div class="pad fade" style="padding-bottom:20px">
-   <h2 class="serif" style="font-size:26px;line-height:1.2;margin:14px 0 8px;color:var(--navy)">${esc(m.title)}</h2>
+   <div class="tiny b7 mt16" style="letter-spacing:.1em;color:var(--gold)">CHAPTER ${chNum(m)}</div>
+   <h2 class="serif" style="font-size:27px;line-height:1.2;margin:6px 0 8px;color:var(--navy)">${esc(m.title)}</h2>
    <div class="row small" style="gap:8px"><span class="tag ${st==='done'?'ok':st==='ip'?'gold':''}">${STLABEL[st]}</span><span class="muted">${st==='done'?`Quiz ${lastQ?lastQ.pct+'%':'passed'}`:'Pass the quiz to complete'}</span></div>
-   <div id="n-notes"></div>
-   ${d?`<div class="doc mt12" style="--fs:${S.prefs.fs}">${md(d.intro)}</div>
-     <div class="card cp mt12"><div class="tiny muted b7 mb8">LEARNING OBJECTIVES</div>${d.obj.map(o=>`<div class="row small" style="align-items:flex-start;margin:4px 0">${ic('check','s')}<span>${esc(o)}</span></div>`).join('')}</div>`:''}
-   <div class="doc mt12" style="--fs:${S.prefs.fs}">${md(notes)}</div>
-
-   <div class="sec" id="lesson-sec"><h3>Lesson</h3><span class="tiny muted">${lessonSlides(m.id).length} slides · ${lpMM(lpTimes(lessonSlides(m.id)).total)}</span></div>
-   <div id="lesson">${lessonPlayer(m.id)}</div>
-
-   <div class="card cp mt16" id="quiz-sec" style="text-align:center;background:var(--navy);color:#fff;border:0"><div class="serif" style="font-size:20px">Check your understanding</div><div class="small" style="color:#b9c1d6">5 questions with instant feedback${sc?` · score so far ${pct(sc.c,sc.t)}%`:''}</div>
-     <button class="btn gold full mt12" data-a="quiz" data-st="chapter" data-x="${m.id}" data-n="5" ${mcqPool({type:'chapter',id:m.id}).length?'':'disabled'}>${ic('target','s')} ${lastQ?'Retake quiz':'Quiz me'}</button></div>
-
-   ${d?`<div class="sec" id="exam-sec"><h3>Exam questions</h3></div><div class="card list">${d.short.map(q=>`<div class="li small"><span class="tag navy">2m</span><span class="grow">${esc(q)}</span></div>`).join('')}${d.long.map(q=>`<div class="li small"><span class="tag gold">10m</span><span class="grow">${esc(q)}</span></div>`).join('')}</div>`:''}
-   <div class="sec" id="pyq-sec"><h3>Sample PYQs</h3><span class="tag bad">AI-generated · not official</span></div>
-   <div class="card list">${papersOf(m.sid).map(pp=>`<button class="li" data-a="paper" data-x="${pp.id}">${ic('file')}<div class="grow b6 small">${esc(pp.title)}</div>${ic('right','chev')}</button>`).join('')}</div>
-   <div class="row mt16" style="gap:8px">${chNeighbor(m,-1)?`<button class="btn soft sm grow" data-a="openCh" data-x="${chNeighbor(m,-1).id}" data-r="1">${ic('left','s')} Previous</button>`:''}${chNeighbor(m,1)?`<button class="btn soft sm grow" data-a="openCh" data-x="${chNeighbor(m,1).id}" data-r="1">Next chapter ${ic('right','s')}</button>`:''}</div>
-
+   <div class="chgrid mt16">
+     <button class="optile" data-a="pdfOpen" data-x="${m.id}" data-k="notes"><span class="ic">${ic('book','l')}</span><span><span class="t">Notes</span><span class="s">PDF${d?'':' · outline'}</span></span></button>
+     <button class="optile qb" data-a="pdfOpen" data-x="${m.id}" data-k="qb"><span class="ic">${ic('listc','l')}</span><span><span class="t">Question Bank</span><span class="s">PDF · ${nq} questions</span></span></button>
+   </div>
+   <div class="card list mt16">
+     <button class="li" data-a="go" data-v="lesson" data-x="${m.id}">${ic('play')}<div class="grow"><div class="b6">Play the lesson</div><div class="tiny muted">${lessonSlides(m.id).length} slides · ${lpMM(lpTimes(lessonSlides(m.id)).total)}</div></div>${ic('right','chev')}</button>
+     <button class="li" data-a="quiz" data-st="chapter" data-x="${m.id}" data-n="5" ${mcqPool({type:'chapter',id:m.id}).length?'':'disabled'}>${ic('target')}<div class="grow"><div class="b6">${lastQ?'Retake the quiz':'Take the quiz'}</div><div class="tiny muted">5 questions${lastQ?` · last score ${lastQ.pct}%`:''}</div></div>${ic('right','chev')}</button>
+   </div>
+   <div class="row mt16" style="gap:8px">${prev?`<button class="btn soft sm grow" data-a="openCh" data-x="${prev.id}" data-r="1">${ic('left','s')} Previous</button>`:''}${next?`<button class="btn soft sm grow" data-a="openCh" data-x="${next.id}" data-r="1">Next chapter ${ic('right','s')}</button>`:''}</div>
   </div>`;
 };
+V.lesson = p => { const m=CH(p.x); return `${topbar(`Lesson · Chapter ${chNum(m)}`)}<div class="pad fade" style="padding-bottom:20px"><h2 class="serif" style="font-size:22px;color:var(--navy);margin:14px 0 10px">${esc(m.title)}</h2><div id="lesson">${lessonPlayer(m.id)}</div></div>`; };
 
 /* ---- in-chapter lesson: a mini-lecture built from the chapter's own notes ----
    intro → concept explanations (with the notes' tables / code / formulas as visuals) → worked example
@@ -4292,7 +4299,7 @@ async function webSample(input){
 }
 async function initWeb(){
   if('speechSynthesis' in window && typeof SpeechSynthesisUtterance!=='undefined'){ AI.tts=webTTS(); try{ speechSynthesis.getVoices(); }catch(e){} }
-  AI.dl = { save: async ({filename, data})=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([data],{type:'text/html'})); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500); return {status:'saved'}; } };
+  AI.dl = { save: async ({filename, data})=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(data instanceof Blob ? data : new Blob([data],{type:/\.pdf$/i.test(filename)?'application/pdf':'text/html'})); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500); return {status:'saved'}; } };
   if(location.protocol.startsWith('http')){ try{ const r=await fetch('/api/ask',{cache:'no-store'}); if(r.ok){ const j=await r.json(); if(j.ai){ AI.sample=webSample; AI.live=true; } } }catch(e){} }
   render();
 }
@@ -4656,6 +4663,9 @@ const A = {
   postDoubt:(el)=>{ const m=S.chat[+el.dataset.i]; const c=aiCtx(); const d={id:uid(), s:c.sid, ch:c.id, q:m.ask, at:Date.now(), mine:true, likes:0, ans:[]}; S.myDoubts.unshift(d); m.posted=true; m.doubt=d.id; save(); render(); toast('Posted for classmates to answer'); },
   doubtsSheet:(el)=>sheet(doubtsSheetHtml(el.dataset.x||null)),
   like:(el)=>{ S.likes[el.dataset.x]=!S.likes[el.dataset.x]; save(); sheet(doubtsSheetHtml(el.dataset.o)); },
+  pdfOpen:async(el)=>{ const x=el.dataset.x, k=el.dataset.k; touchChapter(x); S.aiCtx=x; save(); if(cur().v==='pdf') replace('pdf',{x,k}); else go('pdf',{x,k});
+    if(!_pdfs[x+':'+k]){ await new Promise(r=>setTimeout(r,30)); try{ await chapterPdf(x,k); }catch(e){ console.error(e); toast('Could not prepare the PDF'); } const c=cur(); if(c.v==='pdf'&&c.x===x&&c.k===k) render(); } },
+  pdfSave:async(el)=>{ const P=await chapterPdf(el.dataset.x, el.dataset.k); if(!AI.dl){ toast('Downloading is not available here'); return; } try{ await AI.dl.save({filename:P.file, data:P.blob}); toast('PDF saved'); }catch(e){ toast(e&&e.code==='declined'?'Download cancelled':'Download is not available here'); } },
   lpPlay:(el)=>lpStart(el.dataset.x), lpPause:()=>{ lpStop(); lpPaint(); },
   lpSeek:(el)=>lpSeek(el.dataset.x, +el.dataset.i, true),
   lpStep:(el)=>{ lpEnsure(el.dataset.x); lpSeek(el.dataset.x, LP.i + +el.dataset.d); },
@@ -4689,6 +4699,157 @@ document.addEventListener('input', e=>{ const el=e.target; if(el.dataset.i==='st
 
 /* ---- boot ---- */
 startNav(); render(); initCaps();
+
+/* ===== In-app PDF: lay out chapter content on A4 canvases, then write a standard PDF (one JPEG image per page).
+   No external libraries, so it works inside Claude and on the public website alike. ===== */
+const PDFK = {W:1240, H:1754, M:110};          // A4 at 150 dpi
+const PF = {
+  body:  '400 30px Georgia, "Source Serif 4", "Times New Roman", serif',
+  bodyB: '700 30px Georgia, "Source Serif 4", "Times New Roman", serif',
+  bodyI: 'italic 400 30px Georgia, "Source Serif 4", serif',
+  code:  '400 24px Menlo, Consolas, "Courier New", monospace',
+  h1:    '700 52px Georgia, "Source Serif 4", serif',
+  h2:    '700 38px Georgia, "Source Serif 4", serif',
+  h3:    '700 32px Georgia, "Source Serif 4", serif',
+  sans:  '400 24px Manrope, "Segoe UI", Roboto, Arial, sans-serif',
+  sansB: '700 24px Manrope, "Segoe UI", Roboto, Arial, sans-serif',
+  small: '400 21px Manrope, "Segoe UI", Roboto, Arial, sans-serif'
+};
+const PCOL = {ink:'#1d2438', navy:'#13213f', gold:'#9c7a3c', muted:'#6b7389', line:'#e2ddd2', shade:'#f5f1e8', quote:'#eef1f7', bad:'#7a2e2b'};
+
+/* inline runs: **bold**, ‹code› */
+function pRuns(t){ const out=[]; const re=/\*\*([^*]+)\*\*|‹([^›]+)›|`([^`]+)`/g; let last=0, m; t=String(t);
+  while((m=re.exec(t))){ if(m.index>last) out.push({t:t.slice(last,m.index)}); if(m[1]) out.push({t:m[1], b:1}); else out.push({t:m[2]||m[3], c:1}); last=re.lastIndex; }
+  if(last<t.length) out.push({t:t.slice(last)}); return out.map(r=>({...r, t:r.t.replace(/\*([^*]+)\*/g,'$1')})); }
+/* markdown dialect → blocks */
+function pBlocks(src){
+  const L=String(src||'').split('\n'), B=[]; let i=0;
+  while(i<L.length){ const l=L[i];
+    if(/^(~~~|```)/.test(l)){ const lang=l.replace(/^(~~~|```)/,'').trim(); const b=[]; i++; while(i<L.length&&!/^(~~~|```)/.test(L[i])) b.push(L[i++]); i++; B.push({k:lang==='output'?'out':'code', lines:b}); continue; }
+    if(/^\s*\|/.test(l)){ const rows=[]; while(i<L.length&&/^\s*\|/.test(L[i])){ rows.push(L[i].trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim())); i++; } B.push({k:'table', rows:rows.filter(r=>!r.every(c=>/^:?-+:?$/.test(c)))}); continue; }
+    if(/^\$\$/.test(l)){ B.push({k:'fx', t:l.replace(/^\$\$\s*/,'')}); i++; continue; }
+    if(/^>\s?/.test(l)){ const b=[]; while(i<L.length&&/^>\s?/.test(L[i])) b.push(L[i++].replace(/^>\s?/,'')); B.push({k:'quote', t:b.join(' ')}); continue; }
+    let m;
+    if((m=l.match(/^(#{1,3}) (.*)/))){ B.push({k:'h'+Math.min(3,m[1].length+ (m[1].length===1?0:0)), t:m[2]}); i++; continue; }
+    if(/^\s*([-*]|\d+\.) /.test(l)){ while(i<L.length&&/^\s*([-*]|\d+\.) /.test(L[i])){ const ind=L[i].match(/^\s*/)[0].length, mm=L[i].trim().match(/^([-*]|\d+\.) (.*)/); B.push({k:'li', mark:/\d/.test(mm[1])?mm[1]:(ind>=2&&/^\([a-d]\)/.test(mm[2])?'':'•'), t:mm[2], lvl:ind>=2?1:0}); i++; } continue; }
+    if(!l.trim()){ i++; continue; }
+    const p=[]; while(i<L.length&&L[i].trim()&&!/^(~~~|```|\s*\||\$\$|>|#{1,3} |\s*([-*]|\d+\.) )/.test(L[i])) p.push(L[i++]); B.push({k:'p', t:p.join(' ')});
+  }
+  return B;
+}
+/* wrap styled runs into lines that fit maxW */
+function pWrap(ctx, runs, maxW, base){
+  const toks=[]; runs.forEach(r=>{ const f = r.c ? PF.code : (r.b ? base.replace(/^(italic )?\d00/, (m0,it)=>(it||'')+'700') : base); String(r.t).split(/(\s+)/).forEach(w=>{ if(w) toks.push({w, f, c:r.c}); }); });
+  const lines=[]; let cur=[], wid=0;
+  toks.forEach(tk=>{ ctx.font=tk.f; let tw=ctx.measureText(tk.w).width; const sp=/^\s+$/.test(tk.w);
+    if(sp){ if(cur.length){ cur.push(tk); wid+=tw; } return; }
+    if(wid+tw>maxW && cur.length){ while(cur.length&&/^\s+$/.test(cur[cur.length-1].w)) cur.pop(); lines.push(cur); cur=[]; wid=0; }
+    if(tw>maxW){ let s=tk.w; while(s.length){ let n=s.length; ctx.font=tk.f; while(n>1&&ctx.measureText(s.slice(0,n)).width>maxW) n--; lines.push([{...tk, w:s.slice(0,n)}]); s=s.slice(n); } return; }
+    cur.push(tk); wid+=tw; });
+  if(cur.length) lines.push(cur);
+  return lines;
+}
+function pDrawLine(ctx, line, x, y, color){ let cx=x; line.forEach(tk=>{ ctx.font=tk.f; ctx.fillStyle = tk.c ? PCOL.bad : color; ctx.fillText(tk.w, cx, y); cx+=ctx.measureText(tk.w).width; }); }
+
+function renderPdfPages(meta, blocks){
+  const {W,H,M}=PDFK, pages=[]; let cv, ctx, y;
+  const top=M+40, bottom=H-M;
+  const newPage=()=>{ cv=document.createElement('canvas'); cv.width=W; cv.height=H; ctx=cv.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H); ctx.textBaseline='alphabetic';
+    ctx.font=PF.small; ctx.fillStyle=PCOL.muted; ctx.fillText(meta.header, M, M-20); ctx.textAlign='right'; ctx.fillText(meta.right, W-M, M-20); ctx.textAlign='left';
+    ctx.fillStyle=PCOL.line; ctx.fillRect(M, M-4, W-2*M, 2); pages.push(cv); y=top; };
+  const need = h => { if(y+h>bottom) newPage(); };
+  const textBlock=(runs, font, color, x, maxW, lh, gapAfter)=>{ const lines=pWrap(ctx, runs, maxW, font); lines.forEach(ln=>{ need(lh); pDrawLine(ctx, ln, x, y+lh*0.78, color); y+=lh; }); y+=gapAfter; };
+  newPage();
+  // title block
+  if(meta.banner){ ctx.font=PF.sansB; const bh=54; ctx.fillStyle=PCOL.bad; ctx.fillRect(M,y,W-2*M,bh); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(meta.banner, W/2, y+36); ctx.textAlign='left'; y+=bh+24; }
+  ctx.font=PF.sansB; ctx.fillStyle=PCOL.gold; ctx.fillText(meta.kicker.toUpperCase(), M, y+24); y+=44;
+  textBlock([{t:meta.title}], PF.h1, PCOL.navy, M, W-2*M, 64, 8);
+  ctx.font=PF.sans; ctx.fillStyle=PCOL.muted; ctx.fillText(meta.sub, M, y+22); y+=48; ctx.fillStyle=PCOL.gold; ctx.fillRect(M,y,120,4); y+=36;
+  blocks.forEach(b=>{
+    const maxW=W-2*M;
+    if(b.k==='h1'||b.k==='h2'){ y+=18; need(120); textBlock(pRuns(b.t), PF.h2, PCOL.navy, M, maxW, 50, 10); }
+    else if(b.k==='h3'){ y+=8; need(90); textBlock(pRuns(b.t), PF.h3, '#2a3f6b', M, maxW, 44, 6); }
+    else if(b.k==='p'){ textBlock(pRuns(b.t), PF.body, PCOL.ink, M, maxW, 46, 18); }
+    else if(b.k==='li'){ const ind=M+(b.lvl?44:0); const lines=pWrap(ctx, pRuns(b.t), maxW-(ind-M)-44, PF.body); lines.forEach((ln,k)=>{ need(46); if(k===0){ ctx.font=PF.body; ctx.fillStyle=PCOL.gold; ctx.fillText(b.mark, ind, y+36); } pDrawLine(ctx, ln, ind+44, y+36, PCOL.ink); y+=46; }); y+=6; }
+    else if(b.k==='fx'){ const lines=pWrap(ctx,[{t:b.t}],maxW-80,PF.bodyI); const h=lines.length*46+30; need(h); ctx.fillStyle=PCOL.shade; ctx.fillRect(M,y,maxW,h); ctx.fillStyle=PCOL.gold; ctx.fillRect(M,y,5,h); let yy=y+15; lines.forEach(ln=>{ ctx.font=PF.bodyI; const w=ln.reduce((a,t)=>{ctx.font=t.f;return a+ctx.measureText(t.w).width},0); pDrawLine(ctx, ln, M+(maxW-w)/2, yy+34, PCOL.navy); yy+=46; }); y+=h+18; }
+    else if(b.k==='quote'){ const lines=pWrap(ctx,pRuns(b.t),maxW-48,PF.sans); const h=lines.length*36+28; need(h); ctx.fillStyle=PCOL.quote; ctx.fillRect(M,y,maxW,h); let yy=y+14; lines.forEach(ln=>{ pDrawLine(ctx, ln, M+24, yy+27, '#2a3f6b'); yy+=36; }); y+=h+18; }
+    else if(b.k==='code'||b.k==='out'){ ctx.font=PF.code; const cw=ctx.measureText('M').width, per=Math.floor((maxW-40)/cw); const lines=[]; b.lines.forEach(l=>{ if(!l.length) lines.push(''); for(let s=0;s<l.length;s+=per) lines.push(l.slice(s,s+per)); });
+      if(b.k==='out') lines.unshift('OUTPUT');
+      let k=0; while(k<lines.length){ need(34*Math.min(3,lines.length-k)+24); const fit=Math.max(1,Math.min(lines.length-k, Math.floor((bottom-y-24)/34))); const h=fit*34+24; ctx.fillStyle=b.k==='out'?'#fbf9f3':'#f3f0e8'; ctx.fillRect(M,y,maxW,h); ctx.strokeStyle=PCOL.line; ctx.lineWidth=2; ctx.strokeRect(M,y,maxW,h);
+        for(let j=0;j<fit;j++){ const t=lines[k+j]; ctx.font=(b.k==='out'&&k+j===0)?PF.small:PF.code; ctx.fillStyle=(b.k==='out'&&k+j===0)?PCOL.muted:'#24304d'; ctx.fillText(t, M+20, y+12+34*j+25); }
+        k+=fit; y+=h+(k<lines.length?0:18); } }
+    else if(b.k==='table'){ const n=Math.max(...b.rows.map(r=>r.length)), colW=maxW/n, pad=12;
+      b.rows.forEach((r,ri)=>{ const font=ri===0?PF.sansB:PF.sans; const cells=r.map(c=>pWrap(ctx,pRuns(c),colW-2*pad,font)); const lh=32, h=Math.max(...cells.map(c=>c.length))*lh+2*pad; need(h);
+        if(ri===0){ ctx.fillStyle=PCOL.shade; ctx.fillRect(M,y,maxW,h); }
+        cells.forEach((c,ci)=>{ let yy=y+pad; c.forEach(ln=>{ pDrawLine(ctx, ln, M+ci*colW+pad, yy+24, ri===0?PCOL.navy:PCOL.ink); yy+=lh; }); ctx.strokeStyle=PCOL.line; ctx.lineWidth=2; ctx.strokeRect(M+ci*colW, y, colW, h); });
+        y+=h; }); y+=22; }
+  });
+  pages.forEach((p,i)=>{ const c=p.getContext('2d'); c.font=PF.small; c.fillStyle=PCOL.muted; c.textAlign='center'; c.fillText(`${meta.footer} · Page ${i+1} of ${pages.length}`, W/2, H-M/2); c.textAlign='left'; });
+  return pages;
+}
+
+/* minimal PDF writer: each page is one full-page JPEG */
+function b64bytes(d){ const s=atob(d.split(',')[1]); const u=new Uint8Array(s.length); for(let i=0;i<s.length;i++) u[i]=s.charCodeAt(i); return u; }
+function makePdf(jpegs, title){
+  const enc=new TextEncoder(), parts=[], offs=[]; let len=0;
+  const push=x=>{ const u = typeof x==='string' ? enc.encode(x) : x; parts.push(u); len+=u.length; };
+  const obj=(n, body)=>{ offs[n]=len; push(`${n} 0 obj\n`); body(); push(`\nendobj\n`); };
+  const N=jpegs.length, pw=595.28, ph=841.89;
+  push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  obj(1,()=>push('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2,()=>push(`<< /Type /Pages /Count ${N} /Kids [${jpegs.map((_,i)=>`${3+i*3} 0 R`).join(' ')}] >>`));
+  jpegs.forEach((j,i)=>{ const p=3+i*3, c=p+1, im=p+2; const cs=`q ${pw} 0 0 ${ph} 0 0 cm /Im${i} Do Q`;
+    obj(p,()=>push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im${i} ${im} 0 R >> >> /Contents ${c} 0 R >>`));
+    obj(c,()=>{ push(`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`); });
+    obj(im,()=>{ push(`<< /Type /XObject /Subtype /Image /Width ${j.w} /Height ${j.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${j.bytes.length} >>\nstream\n`); push(j.bytes); push('\nendstream'); }); });
+  const info=3+N*3; obj(info,()=>push(`<< /Title (${String(title).replace(/[()\\]/g,'').replace(/[^\x20-\x7e]/g,'')}) /Producer (DG Learn) >>`));
+  const xref=len, total=info+1; let x=`xref\n0 ${total}\n0000000000 65535 f \n`; for(let n=1;n<total;n++) x+=String(offs[n]).padStart(10,'0')+' 00000 n \n';
+  push(x+`trailer\n<< /Size ${total} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(parts, {type:'application/pdf'});
+}
+
+/* content for each PDF */
+function notesSource(id){
+  const m=CH(id), d=DG.ch[id], doc=chapterDoc(id);
+  if(!d) return doc.pages[0].md.replace(/^## .*\n/,'');
+  return [d.intro, `## Learning objectives\n${d.obj.map(o=>'- '+o).join('\n')}`, d.md, doc.pages.find(p=>/Definitions/.test(p.title)).md, doc.pages.find(p=>/Applications/.test(p.title)).md].join('\n\n');
+}
+function qbSource(id){
+  const m=CH(id), d=DG.ch[id]; const L=[];
+  const mcq = d ? d.mcq.map(q=>({q:q[0],o:q[1],a:q[2],e:q[3]})) : mcqPool({type:'chapter',id}).slice(0,6).map(q=>({q:q.q,o:q.o,a:q.a,e:q.e}));
+  if(d){ L.push(`## Part A — Short-answer questions (2 marks each)\n${d.short.map((q,i)=>`${i+1}. ${q}`).join('\n')}`);
+         L.push(`## Part B — Long-answer questions (10 marks each)\n${d.long.map((q,i)=>`${i+1}. ${q}`).join('\n')}`); }
+  if(mcq.length) L.push(`## Part ${d?'C':'A'} — Multiple-choice questions (1 mark each)\n${mcq.map((q,i)=>`${i+1}. ${q.q.replace(/\n/g,' ')}\n${q.o.map((o,j)=>`  - (${'abcd'[j]}) ${o}`).join('\n')}`).join('\n')}`);
+  if(d) L.push(`## Definitions to learn (2-mark answers)\n${d.defs.map(x=>`- **${x[0]}** — ${x[1]}`).join('\n')}`);
+  if(mcq.length) L.push(`## Answer key — multiple-choice questions\n${mcq.map((q,i)=>`${i+1}. (${'abcd'[q.a]}) ${q.o[q.a]} — ${q.e}`).join('\n')}`);
+  if(d) L.push(`## Points to include in long answers\n${d.sum.map(x=>'- '+x).join('\n')}\n${d.key.map(x=>'- '+x).join('\n')}`);
+  if(!d) L.push(`> Full chapter questions are coming soon. Chapters 1–5 of every subject have complete question banks.`);
+  return L.join('\n\n');
+}
+const _pdfs={};
+async function chapterPdf(id, kind){
+  const key=id+':'+kind; if(_pdfs[key]) return _pdfs[key];
+  if(document.fonts && document.fonts.ready) { try{ await Promise.race([document.fonts.ready, new Promise(r=>setTimeout(r,1500))]); }catch(e){} }
+  const m=CH(id), s=SUBJ(m.sid);
+  const meta = kind==='notes'
+    ? {kicker:`${s.name} · Chapter ${chNum(m)}`, title:m.title, sub:`Study notes · B.Sc. Data Science · ${SEMNAME(s.sem)}`, header:'DG Learn · Study notes', right:`${s.short} · Chapter ${chNum(m)}`, footer:'DG Learn · sample content for demonstration'}
+    : {kicker:`${s.name} · Chapter ${chNum(m)}`, title:`Question Bank: ${m.title}`, sub:`Practice questions with answer key · B.Sc. Data Science · ${SEMNAME(s.sem)}`, header:'DG Learn · Question bank', right:`${s.short} · Chapter ${chNum(m)}`, footer:'DG Learn · practice material', banner:'PRACTICE QUESTIONS — NOT AN OFFICIAL COLLEGE QUESTION PAPER'};
+  const canv=renderPdfPages(meta, pBlocks(kind==='notes'?notesSource(id):qbSource(id)));
+  const imgs=canv.map(c=>c.toDataURL('image/jpeg',0.86));
+  const blob=makePdf(imgs.map(u=>({bytes:b64bytes(u), w:PDFK.W, h:PDFK.H})), meta.title);
+  const file=`DGLearn-${s.short}-Ch${chNum(m)}-${kind==='notes'?'Notes':'QuestionBank'}.pdf`;
+  return _pdfs[key]={imgs, blob, file, pages:imgs.length, title:meta.title};
+}
+
+/* PDF viewer screen */
+V.pdf = p => {
+  const m=CH(p.x), s=SUBJ(m.sid), P=_pdfs[p.x+':'+p.k];
+  const name = p.k==='notes'?'Notes':'Question Bank';
+  return `${topbar(`${name} · Chapter ${chNum(m)}`,{right:`<button class="ib" data-a="askChapter" data-x="${m.id}" aria-label="Ask AI" style="color:var(--gold)">${ic('spark')}</button>${P?`<button class="ib" data-a="pdfSave" data-x="${m.id}" data-k="${p.k}" aria-label="Download PDF">${ic('dl')}</button>`:''}`})}
+   <div class="pdfbar"><span class="tag ${p.k==='notes'?'navy':'bad'}">PDF</span><span class="small b6 grow trunc">${esc(P?P.file:m.title)}</span><span class="tiny muted" id="pdfpg">${P?`${P.pages} page${P.pages>1?'s':''}`:''}</span></div>
+   <div class="pdfview" id="pdfview">${P? P.imgs.map((u,i)=>`<img class="pdfpage" src="${u}" alt="Page ${i+1} of ${P.pages}" data-pg="${i}" loading="lazy">`).join('') : `<div class="empty"><span class="dots"><span></span><span></span><span></span></span><div class="mt8">Preparing PDF…</div></div>`}</div>
+   ${P?`<div class="pad"><button class="btn full mt12" data-a="pdfSave" data-x="${m.id}" data-k="${p.k}">${ic('dl','s')} Download PDF</button>${p.k==='notes'?`<button class="btn soft full mt8" data-a="pdfOpen" data-x="${m.id}" data-k="qb">${ic('listc','s')} Open the Question Bank</button>`:`<button class="btn soft full mt8" data-a="quiz" data-st="chapter" data-x="${m.id}" data-n="5">${ic('target','s')} Take the 5-question quiz</button>`}<div style="height:16px"></div></div>`:''}`;
+};
 </script>
 </body>
 </html>
