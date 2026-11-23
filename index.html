@@ -273,6 +273,11 @@ button.card:active,button.tile:active,button.hero:active{transform:scale(.985)}
 .chtile.ip{border-color:var(--gold)}
 .chtile.done{background:var(--navy);border-color:var(--navy)}.chtile.done .t{color:#fff}.chtile.done .n{color:var(--gold-2)}
 @media(min-width:420px){.chtile .t{font-size:15px}}
+
+.sjtile{aspect-ratio:1/1;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;box-shadow:0 1px 2px rgba(19,33,63,.04),0 6px 18px rgba(19,33,63,.05);transition:transform .12s ease}
+.sjtile:active{transform:scale(.97)}
+.sjtile .ic{width:44px;height:44px;border-radius:13px;background:#e9edf5;color:var(--navy);display:grid;place-items:center}
+.sjtile .t{font-weight:700;font-size:15px;line-height:1.3;color:var(--navy);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 </style>
 </head>
 <body>
@@ -4055,9 +4060,8 @@ V.subjects = p => {
   return `${topbar('Subjects',{back:false})}<div class="pad fade">
    <div class="small muted mt12">${esc(S.profile.degree)} ${esc(S.profile.dept)} · ${YEARS[S.profile.year]}</div>
    <div class="seg mt8">${[1,2].map(n=>`<button class="${sem===n?'on':''}" data-a="semView" data-x="${n}">${SEMNAME(n)}</button>`).join('')}</div>
-   <div class="col mt12">${subjectsOf(sem).map(s=>{ const pg=subjProg(s.id); return `<button class="card cp" style="text-align:left" data-a="go" data-v="subject" data-x="${s.id}">
-      <div class="row">${subjIcon(s)}<div class="grow"><div class="b7" style="font-size:15.5px">${esc(s.name)}</div><div class="small muted">${esc(s.desc)}</div></div></div>
-      <div class="row mt12" style="gap:10px"><div class="grow">${progBar(pg.pct)}</div><span class="small b7">${pg.pct}%</span><span class="tiny muted">${pg.done}/${pg.total} chapters</span></div></button>`; }).join('')}</div>
+   <div class="chgrid mt12">${subjectsOf(sem).map(s=>{ const pg=subjProg(s.id); return `<button class="sjtile" data-a="go" data-v="subject" data-x="${s.id}" aria-label="${esc(s.name)}, ${pg.pct}% complete">
+      <span class="ic">${ic(s.icon,'l')}</span><span class="t">${esc(s.name)}</span><span class="row" style="gap:8px;width:100%"><span class="grow">${progBar(pg.pct,'g')}</span><span class="tiny b7 muted">${pg.pct}%</span></span></button>`; }).join('')}</div>
    <div class="foot">Sample curriculum for demonstration</div></div>`;
 };
 
