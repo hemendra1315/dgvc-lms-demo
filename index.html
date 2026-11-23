@@ -263,6 +263,7 @@ button.card:active,button.tile:active,button.hero:active{transform:scale(.985)}
 
 .tag{white-space:nowrap}
 .brandmark{width:38px;height:38px;border-radius:12px;border:1.5px solid var(--gold);color:var(--gold);display:grid;place-items:center;margin-right:2px}
+.chno{width:30px;height:30px;border-radius:10px;background:var(--grey);color:var(--navy);display:grid;place-items:center;font-weight:800;font-size:12.5px;flex:none}.chno.ip{background:var(--gold-soft);color:#8a6a2e}.chno.done{background:var(--ok);color:#fff}
 </style>
 </head>
 <body>
@@ -3755,6 +3756,8 @@ function allChapters(){
   return _chs;
 }
 const CH = id => allChapters().find(c=>c.id===id);
+const chNum = c => (c.u-1)*5 + c.c;   // chapters are numbered 1–25 within a subject
+const chNeighbor = (c,d) => { const list=chaptersOf(c.sid); const i=list.findIndex(x=>x.id===c.id)+d; return list[i]||null; };
 const unitKey = (sid,u) => `${sid}-${u}`;
 const chaptersOf = (sid,u) => allChapters().filter(c=>c.sid===sid && (u==null || c.u===u));
 
@@ -3771,8 +3774,8 @@ function chapterDoc(id){
     add('Applications and summary', `## Real-world applications\n${(d.apps||[]).map(a=>'- '+a).join('\n')}\n\n## Revision summary\n${d.sum.map(a=>'- '+a).join('\n')}`);
     add('Examination questions', `## Short-answer questions (2 marks)\n${d.short.map((q,i)=>`${i+1}. ${q}`).join('\n')}\n\n## Long-answer questions (10 marks)\n${d.long.map((q,i)=>`${i+1}. ${q}`).join('\n')}\n\n> Practise these, then take the chapter quiz to check your understanding.`);
   } else {
-    const sib = u.ch.map((c,i)=>`${i+1}. ${c[0]}${i+1===m.c?' ← this chapter':''} — ${c[1]}`).join('\n');
-    add('Chapter outline', `## ${m.title}\n**In one line:** ${m.gist}\n\n### Where this fits\nThis chapter belongs to Unit ${m.u}: ${u.t}. ${u.o}\n\n### Chapters in this unit\n${sib}\n\n> Outline notes. Full study notes for this chapter are not written yet in this demo; Unit 1 of every subject has complete notes, quizzes and exam questions.`);
+    const sib = u.ch.map((c,i)=>`- Chapter ${(m.u-1)*5+i+1}: ${c[0]}${i+1===m.c?' ← this chapter':''}`).join('\n');
+    add('Chapter outline', `## ${m.title}\n**In one line:** ${m.gist}\n\n### About this topic\n${u.o}\n\n### Related chapters\n${sib}\n\n> Outline notes. Full study notes for this chapter are not written yet in this demo; Unit 1 of every subject has complete notes, quizzes and exam questions.`);
   }
   return _docs[id]={id, pages, title:m.title};
 }
@@ -3791,7 +3794,7 @@ function mcqPool(scope){
   // scope: {type:'chapter'|'unit'|'subject', id}
   const out=[]; const push=(arr,src,t)=>out.push(qObj(arr,src,t));
   const fromChapter = cid => { const d=DG.ch[cid]; if(d) d.mcq.forEach(q=>push(q,cid,CH(cid).title)); };
-  const fromUnit = (sid,u) => { chaptersOf(sid,u).forEach(c=>fromChapter(c.id)); (SUBJ(sid).units[u-1].mcq||[]).forEach(q=>push(q,unitKey(sid,u),'Unit '+u+': '+SUBJ(sid).units[u-1].t)); };
+  const fromUnit = (sid,u) => { chaptersOf(sid,u).forEach(c=>fromChapter(c.id)); (SUBJ(sid).units[u-1].mcq||[]).forEach(q=>push(q,unitKey(sid,u),`Chapters ${(u-1)*5+1}–${u*5}: ${SUBJ(sid).units[u-1].t}`)); };
   if(scope.type==='chapter'){ const m=CH(scope.id); fromChapter(m.id); const primary=out.length; const own=out.splice(0); fromUnit(m.sid,m.u); const unitQs=out.splice(0).filter(q=>q.src!==m.id); out.push(...own, ...unitQs); out.primary=primary; }
   else if(scope.type==='unit'){ const [sid,u]=scope.id.split('-'); fromUnit(sid,+u); }
   else { SUBJ(scope.id).units.forEach((_,i)=>fromUnit(scope.id,i+1)); }
@@ -3808,7 +3811,7 @@ function buildQuiz(scope, n){
 }
 function scopeTitle(scope){
   if(scope.type==='chapter') return CH(scope.id).title;
-  if(scope.type==='unit'){ const [sid,u]=scope.id.split('-'); return `Unit ${u}: ${SUBJ(sid).units[u-1].t}`; }
+  if(scope.type==='unit'){ const [sid,u]=scope.id.split('-'); return `Chapters ${(u-1)*5+1}–${u*5}`; }
   return SUBJ(scope.id).name;
 }
 function scopeSid(scope){ return scope.type==='subject'?scope.id:scope.id.split('-')[0]; }
@@ -3868,7 +3871,7 @@ function setStatus(id, st){ S.progress[id]=st; save(); }
 function touchChapter(id){ if(status(id)==='ns') S.progress[id]='ip'; S.recent=[id, ...S.recent.filter(x=>x!==id)].slice(0,12); save(); }
 
 /* ---- Quiz scores & weak topics ---- */
-function scoreTitle(key){ return CH(key) ? CH(key).title : (()=>{ const [sid,u]=key.split('-'); return `Unit ${u}: ${SUBJ(sid).units[u-1].t}`; })(); }
+function scoreTitle(key){ return CH(key) ? CH(key).title : (()=>{ const [sid,u]=key.split('-'); return `Chapters ${(u-1)*5+1}–${u*5}: ${SUBJ(sid).units[u-1].t}`; })(); }
 function scoreSid(key){ return key.split('-')[0]; }
 function weakTopics(sem){
   return Object.entries(S.scores).filter(([k,v])=>v.t>=2 && v.c/v.t<0.6 && (!sem || SUBJ(scoreSid(k)).sem===sem))
@@ -4030,7 +4033,7 @@ V.today = () => {
    ${done.length?`<div class="card cp mt8" style="background:var(--ok-soft);border-color:#cfe6da"><div class="tiny b7" style="color:var(--ok)">DONE TODAY</div>${done.slice(0,4).map(l=>`<div class="row small mt8">${ic('check','s')}<span class="grow">${esc(l.text)}</span></div>`).join('')}</div>`:''}
 
    ${cont?`<div class="sec"><h3>Continue learning</h3></div>
-   <button class="card cp row" style="width:100%;text-align:left" data-a="openCh" data-x="${cont.id}">${subjIcon(SUBJ(cont.sid))}<div class="grow"><div class="tiny muted b7">${SUBJ(cont.sid).short} · CHAPTER ${cont.u}.${cont.c} · ${STLABEL[status(cont.id)].toUpperCase()}</div><div class="b7 trunc">${esc(cont.title)}</div></div>${ic('right','chev')}</button>`:''}
+   <button class="card cp row" style="width:100%;text-align:left" data-a="openCh" data-x="${cont.id}">${subjIcon(SUBJ(cont.sid))}<div class="grow"><div class="tiny muted b7">${SUBJ(cont.sid).short} · CHAPTER ${chNum(cont)} · ${STLABEL[status(cont.id)].toUpperCase()}</div><div class="b7 trunc">${esc(cont.title)}</div></div>${ic('right','chev')}</button>`:''}
 
    <div class="sec"><h3>Ask anything</h3></div>
    <form data-f="askToday" class="search" style="height:52px;background:#fff">${ic('spark')}<input name="q" placeholder="Explain normalisation, solve a stats problem…" autocomplete="off"><button class="send" style="width:38px;height:38px;border-radius:11px" aria-label="Ask">${ic('send','s')}</button></form>
@@ -4051,17 +4054,16 @@ V.subjects = p => {
    <div class="foot">Sample curriculum for demonstration</div></div>`;
 };
 
-/* ---------- 4. Subject page (units expand in place) ---------- */
+/* ---------- 4. Subject page: Subject → Chapters ---------- */
 V.subject = p => {
-  const s=SUBJ(p.x), pg=subjProg(s.id); const open=p.open||(p.open={1:true});
-  const cont = chaptersOf(s.id).find(c=>status(c.id)==='ip') || chaptersOf(s.id).find(c=>c.full && status(c.id)!=='done') || chaptersOf(s.id)[0];
+  const s=SUBJ(p.x), pg=subjProg(s.id), cs=chaptersOf(s.id);
+  const cont = cs.find(c=>status(c.id)==='ip') || cs.find(c=>c.full && status(c.id)!=='done') || cs[0];
   return `${topbar(s.name)}<div class="pad fade">
    <div class="mt12 muted">${esc(s.desc)}</div>
    <div class="row mt12" style="gap:10px"><div class="grow">${progBar(pg.pct)}</div><span class="small b7">${pg.pct}%</span><span class="tiny muted">${pg.done}/${pg.total}</span></div>
    <div class="row mt12" style="gap:8px"><button class="btn sm grow" data-a="openCh" data-x="${cont.id}">${ic('play','s')} Continue</button><button class="btn sm soft grow" data-a="scrollTo" data-x="papers">${ic('file','s')} Papers</button><button class="btn sm soft grow" data-a="quiz" data-st="subject" data-x="${s.id}" data-n="${S.prefs.qlen}">${ic('target','s')} Quiz</button></div>
-   <div class="col mt16">${s.units.map((u,i)=>{ const n=i+1, cs=chaptersOf(s.id,n), up=progressOf(cs), isOpen=!!open[n]; return `<div class="card">
-      <button class="li" data-a="toggleUnit" data-x="${n}" style="padding:14px"><div class="sicon ${n===1?'gold':''}" style="font-weight:800;width:36px;height:36px">${n}</div><div class="grow"><div class="b7">${esc(u.t)}</div><div class="tiny muted">${up.done}/5 complete${n===1?' · full notes':''}</div></div>${ic(isOpen?'up':'down','chev')}</button>
-      ${isOpen?`<div class="list" style="border-top:1px solid var(--line)">${cs.map(c=>`<button class="li" data-a="openCh" data-x="${c.id}">${stDot(c.id)}<div class="grow"><div class="b6" style="font-size:14px">${n}.${c.c} ${esc(c.title)}</div><div class="tiny muted">${c.full?'Notes · lesson · quiz':'Outline'}${S.scores[c.id]?` · quiz ${pct(S.scores[c.id].c,S.scores[c.id].t)}%`:''}</div></div>${ic('right','chev')}</button>`).join('')}</div>`:''}</div>`; }).join('')}</div>
+   <div class="sec"><h3>Chapters</h3><span class="tiny muted">${cs.length} chapters</span></div>
+   <div class="card list">${cs.map(c=>`<button class="li" data-a="openCh" data-x="${c.id}"><span class="chno ${status(c.id)}">${status(c.id)==='done'?ic('check','s'):chNum(c)}</span><div class="grow"><div class="b6" style="font-size:14.5px">${esc(c.title)}</div><div class="tiny muted">${c.full?'Notes · lesson · quiz':'Outline notes'}${S.scores[c.id]?` · quiz ${pct(S.scores[c.id].c,S.scores[c.id].t)}%`:''}</div></div>${ic('right','chev')}</button>`).join('')}</div>
    <div class="sec" id="papers"><h3>Sample papers</h3><span class="tag bad">AI-generated · not official</span></div>
    <div class="card list">${papersOf(s.id).map(pp=>`<button class="li" data-a="paper" data-x="${pp.id}">${ic('file')}<div class="grow"><div class="b6">${esc(pp.title)}</div><div class="tiny muted">${esc(pp.type)}${pp.year?' · '+pp.year:''}</div></div>${ic('right','chev')}</button>`).join('')}</div>
    <div style="height:16px"></div></div>`;
@@ -4072,7 +4074,7 @@ V.chapter = p => {
   const m=CH(p.x), s=SUBJ(m.sid), d=DG.ch[m.id], doc=chapterDoc(m.id), st=status(m.id), sc=S.scores[m.id];
   const lastQ=S.quizzes.find(q=>q.scopeType==='chapter'&&q.scopeId===m.id);
   const notes = d ? doc.pages.filter(pg=>!/Examination questions|Introduction/.test(pg.title)).map(pg=>pg.md).join('\n\n') : doc.pages[0].md;
-  return `${topbar(`${s.short} · Chapter ${m.u}.${m.c}`,{right:`<button class="ib" data-a="askChapter" data-x="${m.id}" aria-label="Ask AI about this chapter" style="color:var(--gold)">${ic('spark')}</button>${saveBtn('note',m.id)}`})}
+  return `${topbar(`${s.short} · Chapter ${chNum(m)}`,{right:`<button class="ib" data-a="askChapter" data-x="${m.id}" aria-label="Ask AI about this chapter" style="color:var(--gold)">${ic('spark')}</button>${saveBtn('note',m.id)}`})}
   <nav class="jump">${[['n-notes','Notes'],['lesson-sec','Lesson'],['quiz-sec','Quiz'],...(d?[['exam-sec','Exam Qs']]:[]),['pyq-sec','PYQs']].map(([k,l])=>`<button class="chip" data-a="scrollTo" data-x="${k}">${l}</button>`).join('')}</nav>
   <div class="pad fade" style="padding-bottom:20px">
    <h2 class="serif" style="font-size:26px;line-height:1.2;margin:14px 0 8px;color:var(--navy)">${esc(m.title)}</h2>
@@ -4091,7 +4093,8 @@ V.chapter = p => {
    ${d?`<div class="sec" id="exam-sec"><h3>Exam questions</h3></div><div class="card list">${d.short.map(q=>`<div class="li small"><span class="tag navy">2m</span><span class="grow">${esc(q)}</span></div>`).join('')}${d.long.map(q=>`<div class="li small"><span class="tag gold">10m</span><span class="grow">${esc(q)}</span></div>`).join('')}</div>`:''}
    <div class="sec" id="pyq-sec"><h3>Sample PYQs</h3><span class="tag bad">AI-generated · not official</span></div>
    <div class="card list">${papersOf(m.sid).map(pp=>`<button class="li" data-a="paper" data-x="${pp.id}">${ic('file')}<div class="grow b6 small">${esc(pp.title)}</div>${ic('right','chev')}</button>`).join('')}</div>
-   <div class="row mt16" style="gap:8px">${m.c>1?`<button class="btn soft sm grow" data-a="openCh" data-x="${m.sid}-${m.u}-${m.c-1}" data-r="1">${ic('left','s')} Previous</button>`:''}${m.c<5?`<button class="btn soft sm grow" data-a="openCh" data-x="${m.sid}-${m.u}-${m.c+1}" data-r="1">Next chapter ${ic('right','s')}</button>`:''}</div>
+   <div class="row mt16" style="gap:8px">${chNeighbor(m,-1)?`<button class="btn soft sm grow" data-a="openCh" data-x="${chNeighbor(m,-1).id}" data-r="1">${ic('left','s')} Previous</button>`:''}${chNeighbor(m,1)?`<button class="btn soft sm grow" data-a="openCh" data-x="${chNeighbor(m,1).id}" data-r="1">Next chapter ${ic('right','s')}</button>`:''}</div>
+
   </div>`;
 };
 
@@ -4135,9 +4138,9 @@ function lessonSlides(id){
   } else {
     const u=SUBJ(m.sid).units[m.u-1];
     add({kind:'intro', label:'Concept introduction', title:m.title, text:m.gist, say:say([`In this lesson we look at ${m.title}.`, m.gist])});
-    add({kind:'concept', label:'Where this fits', title:`Unit ${m.u}: ${u.t}`, text:u.o, list:u.ch.map(c=>c[0]), say:say([u.o, `This unit covers ${u.ch.map(c=>c[0]).join(', ')}.`])});
+    add({kind:'concept', label:'Related chapters', title:u.t, text:u.o, list:u.ch.map(c=>c[0]), say:say([u.o, `Related chapters are ${u.ch.map(c=>c[0]).join(', ')}.`])});
     if(u.mcq&&u.mcq[0]) add({kind:'check', label:'Quick knowledge check', title:u.mcq[0][0], q:u.mcq[0], say:`Quick check. ${clean(u.mcq[0][0])} Tap your answer.`});
-    add({kind:'summary', label:'Summary', title:'Outline lesson', list:['Full notes for this chapter are coming soon.','Unit 1 of every subject has complete lessons.'], say:'Full notes for this chapter are coming soon. Unit 1 of every subject has complete lessons.'});
+    add({kind:'summary', label:'Summary', title:'Outline lesson', list:['Full notes for this chapter are coming soon.','Chapters 1–5 of every subject have complete lessons.'], say:'Full notes for this chapter are coming soon. Chapters 1 to 5 of every subject have complete lessons.'});
   }
   return _lessons[id]=out;
 }
@@ -4175,7 +4178,7 @@ function lessonPlayer(id){
 /* ---------- Me ---------- */
 const TYPES={note:'Notes',paper:'Sample paper',ainote:'AI note'};
 function savedMeta(s){
-  if(s.type==='note'){ const c=CH(s.id); return {kind:'Notes', title:c.title, sub:`${SUBJ(c.sid).short} · Chapter ${c.u}.${c.c}`, tag:'navy'}; }
+  if(s.type==='note'){ const c=CH(s.id); return {kind:'Notes', title:c.title, sub:`${SUBJ(c.sid).short} · Chapter ${chNum(c)}`, tag:'navy'}; }
   if(s.type==='paper'){ const m=paperMeta(s.id); return {kind:'Sample paper', title:m.title, sub:SUBJ(m.sid).name, tag:'bad'}; }
   const n=S.aiNotes.find(n=>n.id===s.id)||{title:'AI note'}; return {kind:'AI note', title:n.title, sub:n.sid?SUBJ(n.sid).name:'AI assistant', tag:'gold'};
 }
@@ -4340,7 +4343,7 @@ function explainCode(code){
 }
 function firstCode(c){ const d=DG.ch[c.id]; const m=d&&d.md.match(/~~~python\n([\s\S]*?)~~~/); return m?m[1]:null; }
 function revisionNote(c){ const d=DG.ch[c.id];
-  if(!d) return `## ${c.title}\n- ${c.gist}\n- Part of Unit ${c.u}: ${c.unit}\n\n> Full notes for this chapter are coming soon.`;
+  if(!d) return `## ${c.title}\n- ${c.gist}\n- Chapter ${chNum(c)} of ${SUBJ(c.sid).name}\n\n> Full notes for this chapter are coming soon.`;
   return `## ${c.title} — revision notes\n### Must-know definitions\n${d.defs.map(x=>`- **${x[0]}**: ${x[1]}`).join('\n')}\n### Key concepts\n${d.key.map(x=>'- '+x).join('\n')}\n### Summary\n${d.sum.map(x=>'- '+x).join('\n')}\n### Likely exam questions\n${d.long.map(x=>'- '+x).join('\n')}`;
 }
 
@@ -4364,12 +4367,10 @@ function localAnswer(text){
   if(/\bsolve\b|statistics problem/.test(t)){
     return {text:`Give me the data values and I will solve it step by step. For example: *“Find mean, median, mode and SD of 2, 4, 4, 4, 5, 5, 7, 9”*.\n\n${statsSolve([2,4,4,4,5,5,7,9])}`, src:'Worked example'};
   }
-  // 3. summarise unit
+  // 3. summarise the current chapter
   if(/summar/.test(t)){
-    const un = +(t.match(/unit\s*(\d)/)||[])[1] || c.u; const u=s.units[un-1]; if(u){
-      const lines=chaptersOf(s.id,un).map(ch=>{ const dd=DG.ch[ch.id]; return `### ${un}.${ch.c} ${ch.title}\n${dd? dd.sum.map(x=>'- '+x).join('\n') : '- '+ch.gist}`; }).join('\n');
-      return {text:`## ${s.name} — Unit ${un}: ${u.t}\n${u.o}\n\n${lines}`, src:`From DG Learn notes: ${s.short} · Unit ${un}`, save:{title:`Summary — ${s.short} Unit ${un}`, sid:s.id}};
-    }
+    if(d) return {text:`## ${c.title} — summary\n${d.sum.map(x=>'- '+x).join('\n')}\n\n**Key concepts**\n${d.key.map(x=>'- '+x).join('\n')}`, src:`From DG Learn notes: ${s.short} · Chapter ${chNum(c)}`, save:{title:`Summary — ${c.title}`, sid:c.sid}};
+    return {text:`## ${c.title}\n${c.gist}\n\n> Full notes for this chapter are coming soon.`, src:`DG Learn · ${s.short} · Chapter ${chNum(c)}`};
   }
   // 4. exam questions
   if(/important|exam question|questions/.test(t)){
@@ -4396,7 +4397,7 @@ function localAnswer(text){
 
 async function liveAnswer(history, onText){
   const c=aiCtx(), s=SUBJ(c.sid);
-  const brief = `You are DG Learn's AI Study Assistant for a first-year B.Sc. Data Science student (D.G. Vaishnav College, Chennai — prototype app). Student's selection: ${S.profile.degree} ${S.profile.dept}, ${YEARS[S.profile.year]}, ${SEMNAME(S.profile.sem)}. Current subject: ${s.name}. Current chapter: ${c.title} (Unit ${c.u}: ${c.unit}).
+  const brief = `You are DG Learn's AI Study Assistant for a first-year B.Sc. Data Science student (D.G. Vaishnav College, Chennai — prototype app). Student's selection: ${S.profile.degree} ${S.profile.dept}, ${YEARS[S.profile.year]}, ${SEMNAME(S.profile.sem)}. Current subject: ${s.name}. Current chapter: Chapter ${chNum(c)}, ${c.title}.
 Ground every answer in the DG Learn notes for the selected chapter below and cite them like (notes p. 3). If the question is not covered by these notes, say so in one line ("This isn't in your chapter notes, but…") and then give a brief, standard textbook answer. Never invent syllabus details, unit numbers, exam patterns, marks, dates or college rules; if asked about them, say the official syllabus and timetable come from the college. Be accurate, concise and encouraging; write for a first-year student. Use short markdown: ## headings only when helpful, bullet lists, **bold** key terms, and code in fenced \`\`\`python blocks. For statistics or maths, show each step. If you give exam-style questions, say they are practice questions, not official college papers. Do not invent college rules, dates or official syllabus details.
 
 DG LEARN NOTES — ${c.title}:
@@ -4590,7 +4591,7 @@ function ctxSheet(sid){
   const c=aiCtx(); sid=sid||c.sid;
   sheet(`<div class="b7" style="font-size:17px">What are you studying?</div><div class="small muted">The assistant uses this chapter’s notes.</div>
    <div class="chips mt12" style="flex-wrap:wrap">${DG.subjects.map(s=>`<button class="chip ${s.id===sid?'on':''}" data-a="ctxSubj" data-x="${s.id}">${s.short}</button>`).join('')}</div>
-   <div class="card list mt12">${chaptersOf(sid).map(ch=>`<button class="li" data-a="ctxSet" data-x="${ch.id}"><div class="grow small"><b>${ch.u}.${ch.c}</b> ${esc(ch.title)}</div>${ch.id===c.id?ic('check','s'):''}</button>`).join('')}</div>`);
+   <div class="card list mt12">${chaptersOf(sid).map(ch=>`<button class="li" data-a="ctxSet" data-x="${ch.id}"><div class="grow small"><b>${chNum(ch)}.</b> ${esc(ch.title)}</div>${ch.id===c.id?ic('check','s'):''}</button>`).join('')}</div>`);
 }
 
 /* ---- actions ---- */
